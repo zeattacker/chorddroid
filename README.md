@@ -8,7 +8,7 @@ Resources :
 Screenshot
 ========
 
-![](ss.jpg)
+![](ss2.jpg)
 
 How to use
 ----------
