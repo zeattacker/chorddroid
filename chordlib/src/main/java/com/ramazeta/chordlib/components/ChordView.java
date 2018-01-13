@@ -1,11 +1,15 @@
 package com.ramazeta.chordlib.components;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
+
+import com.ramazeta.chordlib.R;
 
 /**
  * Created by rama on 13/01/18.
@@ -17,30 +21,58 @@ public class ChordView extends View {
     private Paint dotPaint;
     private Paint stringPaint;
     private Paint nutPaint;
-    private int stringColor = Color.BLACK,fretColor = Color.BLACK ,nutColor = Color.BLACK ,dotColor = Color.BLACK;
+    private Paint textPaint;
+    private Paint textFretPaint;
+    private int stringColor,fretColor,dotColor,circleTextColor;
 
-    public ChordView(Context context, AttributeSet as) {
-        super(context, as);
+
+
+    public ChordView(Context context, AttributeSet attr) {
+        this(context, attr, 0);
+    }
+
+    public ChordView(Context context) {
+        this(context, null);
+    }
+
+    public ChordView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
         chordshape = null;
+        TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs,
+                R.styleable.ChordDroid,
+                defStyleAttr, 0);
+        stringColor = a.getColor(R.styleable.ChordDroid_fretTextColor, Color.BLACK);
+        fretColor = a.getColor(R.styleable.ChordDroid_fretTextColor, Color.BLACK);
+        dotColor = a.getColor(R.styleable.ChordDroid_cirlceColor, Color.BLACK);
+        circleTextColor = a.getColor(R.styleable.ChordDroid_circleTextColor, Color.WHITE);
 
         stringPaint = new Paint();
-        stringPaint.setColor(stringColor);
+        stringPaint.setColor(fretColor);
         stringPaint.setAntiAlias(true);
 
         fretPaint = new Paint();
         fretPaint.setColor(fretColor);
         fretPaint.setAntiAlias(true);
 
+        textPaint = new Paint();
+        textPaint.setColor(circleTextColor);
+        textPaint.setAntiAlias(true);
+
         nutPaint = new Paint();
-        nutPaint.setColor(nutColor);
+        nutPaint.setColor(fretColor);
         nutPaint.setAntiAlias(true);
+
+        textFretPaint = new Paint();
+        textFretPaint.setColor(stringColor);
+        textFretPaint.setAntiAlias(true);
 
         dotPaint = new Paint();
         dotPaint.setColor(dotColor);
         dotPaint.setAntiAlias(true);
     }
 
-    public void setStringColor(int stringColor){
+    public void setStringColor(int stringColor) {
         this.stringColor = stringColor;
     }
 
@@ -48,12 +80,12 @@ public class ChordView extends View {
         this.fretColor = fretColor;
     }
 
-    public void setNutColor(int nutColor) {
-        this.nutColor = nutColor;
-    }
-
     public void setDotColor(int dotColor) {
         this.dotColor = dotColor;
+    }
+
+    public void setCircleTextColor(int circleTextColor) {
+        this.circleTextColor = circleTextColor;
     }
 
     public void setShape(Shape chordshape) {
@@ -63,6 +95,7 @@ public class ChordView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+
         int width = getWidth();
         int height = getHeight();
 
@@ -74,20 +107,15 @@ public class ChordView extends View {
         nutPaint.setStrokeWidth(penWidth * 2);
         fretPaint.setStrokeWidth(penWidth / 2);
         fretPaint.setTextSize(12 * penWidth);
+        textFretPaint.setTextSize(5 * penWidth);
 
         if (chordshape != null) {
             // draw the chord shape
-            drawLines(canvas, size);
+            drawLines(canvas);
         }
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int size = Math.min( View.MeasureSpec.getSize(widthMeasureSpec), View.MeasureSpec.getSize(heightMeasureSpec) );
-        setMeasuredDimension(size, size);
-    }
-
-    private void drawLines(Canvas c, int size) {
+    private void drawLines(Canvas c) {
         int[] pos = chordshape.getPositions();
         int n = pos.length;
 
@@ -108,36 +136,36 @@ public class ChordView extends View {
 
         int frets = 1 + (last_fret - first_fret);
 
-        float d_w = size / (frets);
-        float d_h = size / (n + 1);
-
-        // label the first fret
-//        c.drawText(first_fret + "", d_w * 0.5f, d_h * 0.7f, fretPaint);
+        float d_w = (getHeight() / (frets));
+        float d_h = (getWidth() / (n + 1));
 
         for (int i = n; i > 0; i--) {
-            c.drawLine(d_h * i, 0, d_h * i, size, stringPaint);
+            c.drawLine(d_h * i, 0, d_h * i, getHeight(), stringPaint);
         }
-
         for (int i = frets; i > 0; i--) {
+            c.drawText(i + " Fr",d_h * (pos.length + 0.25f), d_w * ((float)(i - first_fret + 1) - 0.5f), textFretPaint);
             c.drawLine(d_h * 0.75f, d_w * i, d_h * (pos.length + 0.25f), d_w * i, stringPaint);
         }
         if (first_fret == 1) {
             c.drawLine(d_h * 0.75f, d_w * 0 + nutPaint.getStrokeWidth() / 2, d_h * (pos.length + 0.25f), d_w * 0 + nutPaint.getStrokeWidth() / 2, nutPaint);
         }
 
-        for (int string = 0; string < pos.length; string++) {
-            int fret = pos[pos.length - string - 1];
+        int countFret = 1;
+        for(int string = pos.length; string > 0; string--){
+            int fret = pos[string - 1];
             // fret position relative to the fretboard position
             int rel_fret = fret - first_fret;
             float r = d_w / 4f;
             if (fret > 0) {
-                float c_x = d_w * ((float) rel_fret + 0.5f);
-                float c_y = d_h * (1f + (float) string);
+                float c_y = d_w * ((float) rel_fret + 0.5f);
+                float c_x = d_h * (0f + (float) string);
                 c.drawCircle(c_x, c_y, r, fretPaint);
+                textPaint.setTextSize(r);
+                c.drawText(String.valueOf(countFret++),c_x - (r / 3f),c_y + (r / 3f), textPaint);
             } else if (fret < 0) {
                 // paint markers on muted strings
-                float c_x = d_w * 0.5f;
-                float c_y = d_h * (1f + (float) string);
+                float c_y = d_w * 0.5f;
+                float c_x = d_h * (0f + (float) string);
                 c.drawLine(c_x - r, c_y - r, c_x + r, c_y + r, stringPaint);
                 c.drawLine(c_x - r, c_y + r, c_x + r, c_y - r, stringPaint);
             }

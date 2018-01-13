@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ChordDroid">
+        <attr name="cirlceColor" format="color"/>
+        <attr name="pathColor" format="color"/>
+        <attr name="fretTextColor" format="color"/>
+        <attr name="circleTextColor" format="color"/>
+    </declare-styleable>
+</resources>
